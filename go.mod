@@ -12,7 +12,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.1
 	github.com/sevlyar/go-daemon v0.1.4
 	github.com/sirupsen/logrus v1.3.0
-	github.com/struCoder/pidusage v0.1.2
 	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc // indirect
 	golang.org/x/sys v0.0.0-20190106192425-1775db3f06b5 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6

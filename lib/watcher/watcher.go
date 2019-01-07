@@ -4,8 +4,8 @@ import (
 	"os"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/gostones/apm/lib/process"
+	log "github.com/sirupsen/logrus"
 )
 
 // ProcStatus is a wrapper with the process state and an error in case there's any.

@@ -5,11 +5,11 @@ import (
 	"strconv"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/fatih/color"
-	"github.com/olekukonko/tablewriter"
 	"github.com/gostones/apm/lib/master"
 	"github.com/gostones/apm/lib/utils"
+	"github.com/olekukonko/tablewriter"
+	log "github.com/sirupsen/logrus"
 )
 
 // Cli is the command line client.

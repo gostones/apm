@@ -3,9 +3,9 @@ package process
 import (
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/struCoder/pidusage"
+	"github.com/gostones/apm/lib/pidusage"
 	"github.com/gostones/apm/lib/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 // ProcStatus is a wrapper with the process current status.
