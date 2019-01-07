@@ -52,7 +52,7 @@ func (preparable *Preparable) PrepareBin() ([]byte, error) {
 
 	preparable.Cmd = preparable.getBinPath()
 
-	log.Debugf("PrepareBin %v %v\n", cmd, cmdArgs)
+	log.Debugf("PrepareBin %v %v", cmd, cmdArgs)
 
 	return exec.Command(cmd, cmdArgs...).Output()
 }

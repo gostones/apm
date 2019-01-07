@@ -181,7 +181,7 @@ func (client *RemoteClient) StartGoBin(sourcePath string, name string, keepAlive
 		Args:       args,
 	}
 
-	log.Debugf("StartGoBin: %v\n", goBin)
+	log.Debugf("StartGoBin calling: %v", goBin)
 	return client.conn.Call("RemoteMaster.StartGoBin", goBin, &started)
 }
 

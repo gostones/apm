@@ -22,7 +22,7 @@ type Cli struct {
 func InitCli(dsn string, timeout time.Duration) *Cli {
 	client, err := master.StartRemoteClient(dsn, timeout)
 	if err != nil {
-		log.Fatalf("Failed to start remote client due to: %+v\n", err)
+		log.Fatalf("Failed to start remote client due to: %+v", err)
 	}
 	return &Cli{
 		remoteClient: client,
@@ -34,18 +34,18 @@ func InitCli(dsn string, timeout time.Duration) *Cli {
 func (cli *Cli) Save() {
 	err := cli.remoteClient.Save()
 	if err != nil {
-		log.Fatalf("Failed to save list of processes due to: %+v\n", err)
+		log.Fatalf("Failed to save list of processes due to: %+v", err)
 	}
 }
 
 // StartGoBin will try to start a go binary process.
 // Returns a fatal error in case there's any.
 func (cli *Cli) StartGoBin(sourcePath string, name string, keepAlive bool, args []string) {
-	log.Debugf("StartGoBin: %+v %v %v %v\n", sourcePath, name, keepAlive, args)
+	log.Debugf("StartGoBin: %+v %v %v %v ...", sourcePath, name, keepAlive, args)
 
 	err := cli.remoteClient.StartGoBin(sourcePath, name, keepAlive, args)
 	if err != nil {
-		log.Fatalf("Failed to start go bin due to: %+v\n", err)
+		log.Fatalf("Failed to start go bin, error: %+v", err)
 	}
 }
 
@@ -59,7 +59,7 @@ func (cli *Cli) RestartProcess(procName string) {
 	}
 	err := cli.remoteClient.RestartProcess(procName)
 	if err != nil {
-		log.Fatalf("Failed to restart process due to: %+v\n", err)
+		log.Fatalf("Failed to restart process due to: %+v", err)
 	}
 }
 
@@ -68,7 +68,7 @@ func (cli *Cli) RestartProcess(procName string) {
 func (cli *Cli) StartProcess(procName string) {
 	err := cli.remoteClient.StartProcess(procName)
 	if err != nil {
-		log.Errorf("Failed to start process due to: %+v\n", err)
+		log.Errorf("Failed to start process due to: %+v", err)
 	}
 }
 
@@ -80,7 +80,7 @@ func (cli *Cli) StopProcess(procName string) {
 	} else {
 		err := cli.remoteClient.StopProcess(procName)
 		if err != nil {
-			log.Fatalf("Failed to stop process due to: %+v\n", err)
+			log.Fatalf("Failed to stop process due to: %+v", err)
 		}
 	}
 }
@@ -94,7 +94,7 @@ func (cli *Cli) DeleteProcess(procName string) {
 	}
 	err := cli.remoteClient.DeleteProcess(procName)
 	if err != nil {
-		log.Fatalf("Failed to delete process due to: %+v\n", err)
+		log.Fatalf("Failed to delete process due to: %+v", err)
 	}
 }
 
@@ -102,7 +102,7 @@ func (cli *Cli) DeleteProcess(procName string) {
 func (cli *Cli) Status() {
 	procResponse, err := cli.remoteClient.MonitStatus()
 	if err != nil {
-		log.Fatalf("Failed to get status due to: %+v\n", err)
+		log.Fatalf("Failed to get status due to: %+v", err)
 	}
 
 	table := utils.GetTableWriter()
@@ -150,7 +150,7 @@ func (cli *Cli) ProcInfo(procName string) {
 func (cli *Cli) DeleteAllProcess() {
 	procResponse, err := cli.remoteClient.MonitStatus()
 	if err != nil {
-		log.Fatalf("Failed to get status due to: %+v\n", err)
+		log.Fatalf("Failed to get status due to: %+v", err)
 	}
 
 	if len(procResponse.Procs) == 0 {

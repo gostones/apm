@@ -156,7 +156,7 @@ func (master *Master) Prepare(sourcePath string, name string, language string, k
 		KeepAlive:  keepAlive,
 		Args:       args,
 	}
-	log.Debugf("Prepare %v\n", procPreparable)
+	log.Debugf("Prepare %v", procPreparable)
 
 	output, err := procPreparable.PrepareBin()
 	return procPreparable, output, err
@@ -168,7 +168,7 @@ func (master *Master) RunPreparable(procPreparable preparable.ProcPreparable) er
 	defer master.Unlock()
 	if _, ok := master.Procs[procPreparable.Identifier()]; ok {
 		log.Warnf("Proc %s already exist.", procPreparable.Identifier())
-		return errors.New("Trying to start a process that already exist.")
+		return errors.New("trying to start a process that already exist")
 	}
 	proc, err := procPreparable.Start()
 	if err != nil {
@@ -198,7 +198,7 @@ func (master *Master) RestartProcess(name string) error {
 		master.Unlock()
 		return err
 	}
-	return errors.New("unknow process.")
+	return errors.New("unknown process")
 
 }
 
@@ -209,7 +209,7 @@ func (master *Master) StartProcess(name string) error {
 	if proc, ok := master.Procs[name]; ok {
 		return master.start(proc)
 	}
-	return errors.New("Unknown process.")
+	return errors.New("unknown process")
 }
 
 // StopProcess will stop a process with the given name.
@@ -219,7 +219,7 @@ func (master *Master) StopProcess(name string) error {
 	if proc, ok := master.Procs[name]; ok {
 		return master.stop(proc)
 	}
-	return errors.New("Unknown process.")
+	return errors.New("unknown process")
 }
 
 // DeleteProcess will delete a process and all its files and childs forever.
