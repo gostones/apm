@@ -1,10 +1,12 @@
 package watcher
 
-import "os"
-import "sync"
+import (
+	"os"
+	"sync"
 
-import "github.com/topfreegames/apm/lib/process"
-import log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"github.com/gostones/apm/lib/process"
+)
 
 // ProcStatus is a wrapper with the process state and an error in case there's any.
 type ProcStatus struct {

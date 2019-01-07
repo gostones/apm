@@ -1,10 +1,16 @@
 package preparable
 
-import "os/exec"
-import "strings"
+import (
+	"os/exec"
+	"strings"
 
-import "github.com/topfreegames/apm/lib/process"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/gostones/apm/lib/process"
+)
+
+// ProcPreparable is a preparable with all the necessary informations to run
+// a process. To actually run a process, call the Start() method.
 type ProcPreparable interface {
 	PrepareBin() ([]byte, error)
 	Start() (process.ProcContainer, error)
@@ -15,8 +21,7 @@ type ProcPreparable interface {
 	getOutPath() string
 	getErrPath() string
 }
-// ProcPreparable is a preparable with all the necessary informations to run
-// a process. To actually run a process, call the Start() method.
+
 type Preparable struct {
 	Name       string
 	SourcePath string
@@ -31,6 +36,8 @@ type Preparable struct {
 // command for the process to be executed.
 // Returns the compile command output.
 func (preparable *Preparable) PrepareBin() ([]byte, error) {
+	log.Debugln("PrepareBin ...")
+
 	// Remove the last character '/' if present
 	if preparable.SourcePath[len(preparable.SourcePath)-1] == '/' {
 		preparable.SourcePath = strings.TrimSuffix(preparable.SourcePath, "/")
@@ -44,6 +51,9 @@ func (preparable *Preparable) PrepareBin() ([]byte, error) {
 	}
 
 	preparable.Cmd = preparable.getBinPath()
+
+	log.Debugf("PrepareBin %v %v\n", cmd, cmdArgs)
+
 	return exec.Command(cmd, cmdArgs...).Output()
 }
 
@@ -68,8 +78,9 @@ func (preparable *Preparable) Start() (process.ProcContainer, error) {
 	return proc, err
 }
 
+// Identifier is a function that get proc name
 func (preparable *Preparable) Identifier() string {
-	return preparable.Name;
+	return preparable.Name
 }
 
 func (preparable *Preparable) getPath() string {

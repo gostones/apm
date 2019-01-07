@@ -1,11 +1,16 @@
 package cli
 
-import "github.com/topfreegames/apm/lib/master"
+import (
+	"fmt"
+	"strconv"
+	"time"
 
-import "math"
-import "log"
-import "time"
-import "fmt"
+	log "github.com/sirupsen/logrus"
+	"github.com/fatih/color"
+	"github.com/olekukonko/tablewriter"
+	"github.com/gostones/apm/lib/master"
+	"github.com/gostones/apm/lib/utils"
+)
 
 // Cli is the command line client.
 type Cli struct {
@@ -33,17 +38,11 @@ func (cli *Cli) Save() {
 	}
 }
 
-// Resurrect will restore all previously save processes.
-// Display an error in case there's any.
-func (cli *Cli) Resurrect() {
-	err := cli.remoteClient.Resurrect()
-	if err != nil {
-		log.Fatalf("Failed to resurrect all previously save processes due to: %+v\n", err)
-	}
-}
 // StartGoBin will try to start a go binary process.
 // Returns a fatal error in case there's any.
 func (cli *Cli) StartGoBin(sourcePath string, name string, keepAlive bool, args []string) {
+	log.Debugf("StartGoBin: %+v %v %v %v\n", sourcePath, name, keepAlive, args)
+
 	err := cli.remoteClient.StartGoBin(sourcePath, name, keepAlive, args)
 	if err != nil {
 		log.Fatalf("Failed to start go bin due to: %+v\n", err)
@@ -53,6 +52,11 @@ func (cli *Cli) StartGoBin(sourcePath string, name string, keepAlive bool, args 
 // RestartProcess will try to restart a process with procName. Note that this process
 // must have been already started through StartGoBin.
 func (cli *Cli) RestartProcess(procName string) {
+	isExist := cli.remoteClient.GetProcByName(procName)
+	if len(*isExist) == 0 {
+		log.Errorf("process %s not found", procName)
+		return
+	}
 	err := cli.remoteClient.RestartProcess(procName)
 	if err != nil {
 		log.Fatalf("Failed to restart process due to: %+v\n", err)
@@ -64,20 +68,30 @@ func (cli *Cli) RestartProcess(procName string) {
 func (cli *Cli) StartProcess(procName string) {
 	err := cli.remoteClient.StartProcess(procName)
 	if err != nil {
-		log.Fatalf("Failed to start process due to: %+v\n", err)
+		log.Errorf("Failed to start process due to: %+v\n", err)
 	}
 }
 
 // StopProcess will try to stop a process named procName.
 func (cli *Cli) StopProcess(procName string) {
-	err := cli.remoteClient.StopProcess(procName)
-	if err != nil {
-		log.Fatalf("Failed to stop process due to: %+v\n", err)
+	isExist := cli.remoteClient.GetProcByName(procName)
+	if len(*isExist) == 0 {
+		log.Warnf("process %s not found", procName)
+	} else {
+		err := cli.remoteClient.StopProcess(procName)
+		if err != nil {
+			log.Fatalf("Failed to stop process due to: %+v\n", err)
+		}
 	}
 }
 
 // DeleteProcess will stop and delete all dependencies from process procName forever.
 func (cli *Cli) DeleteProcess(procName string) {
+	isExist := cli.remoteClient.GetProcByName(procName)
+	if len(*isExist) == 0 {
+		log.Errorf("process %s not found", procName)
+		return
+	}
 	err := cli.remoteClient.DeleteProcess(procName)
 	if err != nil {
 		log.Fatalf("Failed to delete process due to: %+v\n", err)
@@ -90,53 +104,62 @@ func (cli *Cli) Status() {
 	if err != nil {
 		log.Fatalf("Failed to get status due to: %+v\n", err)
 	}
-	maxName := 0
+
+	table := utils.GetTableWriter()
+	table.SetAlignment(tablewriter.ALIGN_CENTER)
+	table.SetHeader([]string{
+		"name", "pid", "status", "uptime", "restart", "CPU·%", "memory",
+	})
+
 	for id := range procResponse.Procs {
 		proc := procResponse.Procs[id]
-		maxName = int(math.Max(float64(maxName), float64(len(proc.Name))))
-	}
-	totalSize := maxName + 51;
-	topBar := ""
-	for i := 1; i <= totalSize; i += 1 {
-		topBar += "-"
-	}
-	infoBar := fmt.Sprintf("|%s|%s|%s|%s|",
-		PadString("pid", 13),
-		PadString("name", maxName + 2),
-		PadString("status", 16),
-		PadString("keep-alive", 15))
-	fmt.Println(topBar)
-	fmt.Println(infoBar)
-	for id := range procResponse.Procs {
-		proc := procResponse.Procs[id]
-		kp := "True"
-		if !proc.KeepAlive {
-			kp = "False"
+		status := color.GreenString(proc.Status.Status)
+		if proc.Status.Status != "running" {
+			status = color.RedString(proc.Status.Status)
 		}
-		fmt.Printf("|%s|%s|%s|%s|\n",
-			PadString(fmt.Sprintf("%d", proc.Pid), 13),
-			PadString(proc.Name, maxName + 2),
-			PadString(proc.Status.Status, 16),
-			PadString(kp, 15))
+		table.Append([]string{
+			color.CyanString(proc.Name), fmt.Sprintf("%d", proc.Pid), status, proc.Status.Uptime,
+			strconv.Itoa(proc.Status.Restarts), strconv.Itoa(int(proc.Status.Sys.CPU)),
+			utils.FormatMemory(int(proc.Status.Sys.Memory)),
+		})
 	}
-	fmt.Println(topBar)
+
+	table.SetRowLine(true)
+	table.Render()
 }
 
-// PadString will add totalSize spaces evenly to the right and left side of str.
-// Returns str after applying the pad.
-func PadString(str string, totalSize int) string {
-	turn := 0
-	for {
-		if len(str) >= totalSize {
-			break
-		}
-		if turn == 0 {
-			str = " " + str
-			turn ^= 1
-		} else {
-			str = str + " "
-			turn ^= 1
-		}
+// ProcInfo will display process information
+func (cli *Cli) ProcInfo(procName string) {
+	procDetail := cli.remoteClient.GetProcByName(procName)
+	if len(*procDetail) == 0 {
+		log.Errorf("process %s not found", procName)
+		return
 	}
-	return str
+	table := utils.GetTableWriter()
+	table.SetAutoWrapText(true)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	for k, v := range *procDetail {
+		table.Append([]string{
+			color.GreenString(k), v,
+		})
+	}
+	table.Render()
+}
+
+// DeleteAllProcess will stop all process
+func (cli *Cli) DeleteAllProcess() {
+	procResponse, err := cli.remoteClient.MonitStatus()
+	if err != nil {
+		log.Fatalf("Failed to get status due to: %+v\n", err)
+	}
+
+	if len(procResponse.Procs) == 0 {
+		log.Warn("All processes have been stopped and deleted")
+		return
+	}
+	for id := range procResponse.Procs {
+		proc := procResponse.Procs[id]
+		cli.remoteClient.DeleteProcess(proc.Name)
+		log.Infof("proc: %s has quit", proc.Name)
+	}
 }
